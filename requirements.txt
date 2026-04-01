@@ -3,6 +3,7 @@ nltk
 pandas
 numpy
 torch
+torchvision
 transformers
 matplotlib
 spacy>=3.6,<4.0
