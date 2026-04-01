@@ -55,24 +55,13 @@ tokenizer, bert_model = load_bert_model()
 # ==================== 加载spaCy模型 ====================
 @st.cache_resource
 def load_spacy_model():
-    """加载spaCy英文模型（仅初始化一次）"""
-    import sys
-    import os
-    
+    """加载spaCy英文模型（已在requirements.txt中预安装）"""
     try:
         nlp = spacy.load("en_core_web_sm")
-    except OSError:
-        st.warning("⚠️ spaCy模型未找到，正在下载...")
-        import subprocess
-        try:
-            # 使用sys.executable获取当前Python可执行文件路径
-            subprocess.check_call([
-                sys.executable, "-m", "spacy", "download", "en_core_web_sm"
-            ])
-            nlp = spacy.load("en_core_web_sm")
-        except Exception as e:
-            st.error(f"❌ 模型下载失败: {str(e)}")
-            st.stop()
+    except OSError as e:
+        st.error(f"❌ 模型加载失败: {str(e)}")
+        st.info("💡 如果是首次运行，请稍候1-2分钟后刷新页面")
+        st.stop()
     return nlp
 
 nlp = load_spacy_model()
