@@ -1,7 +1,5 @@
 streamlit>=1.28.0
-scikit-learn
 nltk
-altair
 pandas
 numpy
 torch
