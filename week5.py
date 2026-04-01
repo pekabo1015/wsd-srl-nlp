@@ -5,7 +5,6 @@ from nltk.wsd import lesk
 from nltk.tokenize import word_tokenize
 import torch
 from transformers import AutoTokenizer, AutoModel
-from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -195,9 +194,17 @@ def calculate_cosine_similarity(embedding1, embedding2):
     if embedding1 is None or embedding2 is None:
         return None
     
-    # 计算余弦相似度
-    similarity = cosine_similarity([embedding1], [embedding2])[0][0]
-    return similarity
+    # 使用numpy计算余弦相似度
+    # cosine_similarity = (A·B) / (||A|| * ||B||)
+    dot_product = np.dot(embedding1, embedding2)
+    norm1 = np.linalg.norm(embedding1)
+    norm2 = np.linalg.norm(embedding2)
+    
+    if norm1 == 0 or norm2 == 0:
+        return 0.0
+    
+    similarity = dot_product / (norm1 * norm2)
+    return float(similarity)
 
 # ==================== 核心函数：SRL启发式规则提取 ====================
 def extract_srl_roles(sentence):
