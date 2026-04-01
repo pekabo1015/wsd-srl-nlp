@@ -1,2 +1,1 @@
-# Streamlit Cloud系统依赖配置
-# 这个文件告诉Streamlit在部署时安装这些系统包
+
