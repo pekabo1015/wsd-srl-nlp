@@ -32,6 +32,12 @@ def download_nltk_resources():
         nltk.data.find('tokenizers/punkt')
     except LookupError:
         nltk.download('punkt')
+
+    # NLTK 3.8+ 需要 punkt_tab（word_tokenize 使用）
+    try:
+        nltk.data.find('tokenizers/punkt_tab/english')
+    except LookupError:
+        nltk.download('punkt_tab')
     
     try:
         nltk.data.find('corpora/omw-1.4')
