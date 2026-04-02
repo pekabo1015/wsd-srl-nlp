@@ -4,7 +4,7 @@
 
 ## 🌐 在线体验
 
-访问线上应用：[https://wsd-srl-nlp.streamlit.app](https://wsd-srl-nlp.streamlit.app)
+访问线上应用：[[https://wsd-srl-nlp.streamlit.app](https://wsd-srl-nlp.streamlit.app)](https://wsd-srl-nlp-mcanksjp3xkpa94cx4uqob.streamlit.app/)
 
 （如果链接不可用，请查看下方本地运行说明）
 
