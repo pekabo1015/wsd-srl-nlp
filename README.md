@@ -48,13 +48,27 @@
 
 - **框架**：[Streamlit](https://streamlit.io/) - Python Web应用框架
 - **NLP库**：
-  - `nltk` - 自然语言处理工具包
+  - `nltk` - 自然语言处理工具包（含 WordNet、`punkt` / `punkt_tab` 等分词数据，首次运行自动下载）
   - `spacy` - 工业级NLP库
   - `transformers` - Hugging Face预训练模型
-  - `torch` - 深度学习框架
-- **数据处理**：`pandas`, `numpy`
+  - `torch` - 深度学习框架（版本范围见 `requirements.txt`，不依赖 `torchvision`）
+- **数据处理**：`pandas`, `numpy`（版本与 NumPy ABI 已约束，见下文）
 - **可视化**：`matplotlib`, `spacy-displacy`
-- **计算**：`scikit-learn` - 余弦相似度计算
+- **计算**：余弦相似度由 **NumPy** 在应用内实现（未使用 `scikit-learn`）
+
+## 📦 依赖版本说明（与部署一致）
+
+仓库内 [`requirements.txt`](requirements.txt) 已针对 **Streamlit Cloud** 与常见 Python 版本做了约束，主要包括：
+
+| 依赖 | 说明 |
+|------|------|
+| `torch` | `>=2.6,<3`，由平台解析出当前环境可用的 wheel，避免旧版固定号在高版本 Python 上无法安装 |
+| `numpy` | `>=1.26.4,<2.0`，避免与 `pandas` / `spacy`（含 `thinc`、`blis` 等）二进制 ABI 混装 |
+| `pandas`、`matplotlib`、`spacy` | 均带有版本范围，与上述 NumPy 栈配套 |
+| `transformers` | 固定 `4.46.3` |
+| `en_core_web_sm` | 通过 requirements 中的 wheel 链接安装，与 `spacy` 版本匹配 |
+
+请勿在部署环境或本地虚拟环境中**单独** `pip install --upgrade numpy` 或随意升级上述包，除非你已通读兼容性并愿意整体重装依赖。
 
 ## 📋 系统要求
 
@@ -93,11 +107,11 @@ pip install -r requirements.txt
 
 #### 4. 下载模型（首次需要）
 ```bash
-# 下载spaCy英文模型
+# 下载spaCy英文模型（若已通过 requirements 安装可跳过）
 python -m spacy download en_core_web_sm
-
-# NLTK会在首次运行应用时自动下载wordnet等资源
 ```
+
+首次启动应用时，程序会自动下载 NLTK 数据（如 `wordnet`、`punkt`、`punkt_tab`、`omw-1.4` 等）。**NLTK 3.8+** 需要额外的 `punkt_tab` 资源，`week5.py` 中已处理；若仍报错，可手动执行：`python -c "import nltk; nltk.download('punkt_tab')"`。
 
 #### 5. 运行应用
 ```bash
@@ -160,7 +174,8 @@ wsd-srl-nlp/
 - **WSD模块**：处理时间 2-5秒（取决于句子长度）
 - **SRL模块**：处理时间 1-3秒
 - **模型大小**：BERT模型约350MB，spaCy模型约40MB
-- **并发用户**：Streamlit Cloud免费版支持3-5个并发用户
+- **并发用户**：Streamlit Cloud免费版通常可支撑约 **3～5 个并发会话**（经验值，非硬性 SLA）；人数再多时响应可能变慢或排队
+- **分享使用**：部署成功后，将 **公开 URL** 发给他人即可在浏览器中使用；若仅在本机 `localhost` 运行，则外网用户无法直接访问，需部署到云端或内网可达服务
 
 ## 🐛 故障排除
 
@@ -169,6 +184,10 @@ wsd-srl-nlp/
 
 ### 错误：spaCy model 'en_core_web_sm' not found
 **解决**：运行 `python -m spacy download en_core_web_sm`
+
+### 错误：Resource 'punkt_tab' not found（NLTK）
+**原因**：NLTK 3.8 及以后，`word_tokenize` 依赖 `punkt_tab` 数据包，与旧版仅下载 `punkt` 不同。
+**解决**：使用本仓库最新 `week5.py`（启动时会自动下载 `punkt_tab`），或手动执行：`python -c "import nltk; nltk.download('punkt_tab')"`。
 
 ### 应用启动很慢
 **原因**：首次加载BERT模型（约350MB）
@@ -205,10 +224,11 @@ GitHub push后，Streamlit Cloud会自动检测并重新部署应用（约2-3分
 
 ## ☁️ 部署建议
 
-- 当前项目不依赖 `torchvision`，部署依赖中已移除该包以减少安装失败概率。
-- `torch` 已改为兼容版本范围，部署平台会自动选择与当前 Python 版本匹配的可安装版本。
-- `numpy` 已固定在 **1.26.x**（`<2.0`），并与 `pandas`、`matplotlib`、`spacy` 等一并约束，避免 NumPy ABI 与预编译扩展不一致。
-- 如果之前的应用已经因为依赖报错失败，建议删除失败实例后重新创建，并在创建时确认 Python 版本。
+- **Python 版本**：在 Streamlit Community Cloud 创建应用时，于 `Advanced settings` 中选择 **Python 3.12**。平台不一定读取仓库根目录的 `runtime.txt`，请勿仅依赖该文件指定版本。
+- **PyTorch**：不依赖 `torchvision`；`torch` 使用版本范围，由平台解析出与当前解释器匹配的 wheel。
+- **NumPy 栈**：`numpy` 限制在 **1.26.x**（`<2.0`），并与 `pandas`、`matplotlib`、`spacy` 等一并约束，避免 C 扩展与 NumPy ABI 不一致。
+- **重建部署**：若曾出现安装失败或运行期二进制错误，建议删除失败的应用实例后重新部署，并确认未在控制台单独升级 `numpy`。
+- **更新代码后**：推送到 GitHub 后，Streamlit Cloud 会自动重新构建；若依赖有变，首次构建可能略久。
 
 ## 📚 参考资源
 
