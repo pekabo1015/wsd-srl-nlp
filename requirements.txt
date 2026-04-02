@@ -1,9 +1,8 @@
 streamlit>=1.28.0
 nltk
 pandas
-numpy
-torch==2.5.1
-torchvision==0.20.1
+numpy<3
+torch>=2.6,<3
 transformers==4.46.3
 matplotlib
 spacy>=3.6,<4.0
