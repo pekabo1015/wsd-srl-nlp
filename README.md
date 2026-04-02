@@ -58,7 +58,8 @@
 
 ## 📋 系统要求
 
-- **Python**：3.8 或更高版本
+- **Python**：推荐 3.12（Streamlit Cloud 部署时优先选择 3.12）
+- **NumPy**：依赖锁定在 1.26.x（见 `requirements.txt`），请勿单独升级到 NumPy 2.x
 - **内存**：至少4GB（用于模型加载）
 - **存储**：约1GB（用于模型和依赖）
 
@@ -87,6 +88,8 @@ source .venv/bin/activate
 ```bash
 pip install -r requirements.txt
 ```
+
+如果本机安装了多个 Python 版本，建议先创建 Python 3.12 的虚拟环境再安装依赖。
 
 #### 4. 下载模型（首次需要）
 ```bash
@@ -171,6 +174,14 @@ wsd-srl-nlp/
 **原因**：首次加载BERT模型（约350MB）
 **解决**：耐心等待3-5分钟，后续启动会快很多（使用缓存）
 
+### 部署时报错：No matching distribution found for torch
+**原因**：部署环境的 Python 版本过高，或平台没有当前锁定版本对应的 PyTorch wheel。
+**解决**：在 Streamlit Cloud 新建应用时进入 `Advanced settings`，手动选择 `Python 3.12` 后重新部署。
+
+### 加载时报错：numpy.dtype size changed, may indicate binary incompatibility
+**原因**：`numpy` 主版本与 `pandas`、`matplotlib`、`spacy`（含 `thinc`/`blis` 等）等带 C 扩展的包二进制不匹配，常见于曾单独升级过 `numpy` 或依赖范围过宽导致混装了 NumPy 1.x 与 2.x 的 wheel。
+**解决**：使用仓库中的 `requirements.txt` 完整重装依赖（建议新建虚拟环境后执行 `pip install -r requirements.txt`）。部署端请重新触发一次干净构建，不要手动在控制台单独 `pip install numpy`。
+
 ### 依存图不显示
 **解决**：刷新页面或重启应用
 
@@ -189,6 +200,15 @@ git push origin main
 
 ### Streamlit Cloud自动部署
 GitHub push后，Streamlit Cloud会自动检测并重新部署应用（约2-3分钟）
+
+首次创建应用时，请在 `Advanced settings` 中手动选择 `Python 3.12`。Streamlit Community Cloud 不保证读取仓库中的 `runtime.txt`，如果直接使用默认的更高 Python 版本，可能导致 `torch` 安装失败。
+
+## ☁️ 部署建议
+
+- 当前项目不依赖 `torchvision`，部署依赖中已移除该包以减少安装失败概率。
+- `torch` 已改为兼容版本范围，部署平台会自动选择与当前 Python 版本匹配的可安装版本。
+- `numpy` 已固定在 **1.26.x**（`<2.0`），并与 `pandas`、`matplotlib`、`spacy` 等一并约束，避免 NumPy ABI 与预编译扩展不一致。
+- 如果之前的应用已经因为依赖报错失败，建议删除失败实例后重新创建，并在创建时确认 Python 版本。
 
 ## 📚 参考资源
 
